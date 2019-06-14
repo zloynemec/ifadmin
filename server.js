@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const request = require('request');
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/IFAdmin_TEST', {useNewUrlParser: true});
+mongoose.connect('mongodb://'+process.env.MONGODB_HOST+':'+process.env.MONGODB_PORT+'/'+process.env.MONGODB_NAME, {useNewUrlParser: true});
 const Profile = mongoose.model('Profile', {
   username: String,
   created_at: { type: Date, default: Date.now },
