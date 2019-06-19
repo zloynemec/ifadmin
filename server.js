@@ -47,7 +47,7 @@ function parseProfile(username, chat)
         if (!error && response.statusCode === 200 && response.headers['content-type'].includes('application/json')) {
           var photos = [];
           body.graphql.user.edge_owner_to_timeline_media.edges.forEach(function(edge) {
-            if ('GraphImage' == edge.node.__typename) {
+            if ('GraphImage' == edge.node.__typename || 'GraphSidecar' ==  edge.node.__typename) {
               photos.push({type: 'photo', media: edge.node.display_url});
             }
           });
