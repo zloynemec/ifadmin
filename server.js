@@ -1,6 +1,20 @@
-require('dotenv').config()
+require('dotenv').config();
+
+var log4js = require('log4js');
+log4js.configure({
+  appenders: {
+    botLogs: { type: 'file', filename: process.env.LOG_FILE },
+    console: { type: 'console' }
+  },
+  categories: {
+    bot: { appenders: ['botLogs'], level: 'info' },
+    default: { appenders: ['console', 'botLogs'], level: 'trace' }
+  }
+});
+var log = log4js.getLogger(process.env.LOG_CATEGORY);
 
 const request = require('request');
+
 const mongoose = require('mongoose');
 mongoose.connect('mongodb://'+process.env.MONGODB_HOST+':'+process.env.MONGODB_PORT+'/'+process.env.MONGODB_NAME, {useNewUrlParser: true});
 const Profile = mongoose.model('Profile', {
@@ -13,44 +27,46 @@ const TelegramBot = require('node-telegram-bot-api');
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {polling: true});
 const channel = process.env.TELEGRAM_CHANNEL_ID;
 
-function parseProfile(username)
+function parseProfile(username, chat)
 {
   username = username.toLowerCase().trim();
+  var added = false;
   const url = 'https://www.instagram.com/' + username + '/';
 
   Profile.findOne({ username: username }, function (err, p) {
     if (!p) {
       p = new Profile({ username: username });
-      p.save().then(() => console.log('Added: @' + username));
-    }
-  });
+      p.save().then(() => {
+        log.info('Profile added @' + username);
+        bot.sendMessage(chat.id, 'Profile added');
+      });
 
-  request({
-    url: url + '?__a=1',
-    json: true
-  }, function (error, response, body) {
-    if (!error && response.statusCode === 200 && response.headers['content-type'].includes('application/json')) {
-      // console.log(body) // Print the json response
-      console.log('parsed: @' + username);
-
-      var photos = [];
-      body.graphql.user.edge_owner_to_timeline_media.edges.forEach(function(edge) {
-        // console.log(element);
-        if ('GraphImage' == edge.node.__typename) {
-          // bot.sendPhoto(msg.chat.id, edge.node.display_url);
-          photos.push({type: 'photo', media: edge.node.display_url});
+      request({
+        url: url + '?__a=1',
+        json: true
+      }, function (error, response, body) {
+        if (!error && response.statusCode === 200 && response.headers['content-type'].includes('application/json')) {
+          var photos = [];
+          body.graphql.user.edge_owner_to_timeline_media.edges.forEach(function(edge) {
+            if ('GraphImage' == edge.node.__typename) {
+              photos.push({type: 'photo', media: edge.node.display_url});
+            }
+          });
+          if (photos.length > 0) {
+            bot.sendMessage(channel, url);
+            bot.sendMediaGroup(channel, photos.slice(0, 9));
+          }
+        }
+        else {
+          log.error('Adding profile error:', response.statusCode, ':', error);
         }
       });
-      console.log('Found ' + photos.length + ' photos');
-      if (photos.length > 0) {
-        bot.sendMessage(channel, url);
-        bot.sendMediaGroup(channel, photos.slice(0, 9));
-      }
     }
     else {
-      console.log('Error occurred ' + response.statusCode + ': '  + error);
+      p.save().then(() => log.info('Duplicate add attempt @' + username));
     }
   });
+  return added;
 }
 
 // Matches "/echo [whatever]"
@@ -66,19 +82,24 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
   bot.sendMessage(chatId, resp);
 });
 
+bot.onText(/\/count/, (msg, match) => {
+  Profile.countDocuments({}, function (err, count) {
+    bot.sendMessage(msg.chat.id, 'Number of profiles: ' + count);
+  });
+});
+
 
 // parse profile and send last pic from it
 // /p @user command
-bot.onText(/\/p @(.+)/, (msg, match) => {
-  console.log('found: @' + match[1]);
-  parseProfile(match[1]);
-});
+// bot.onText(/\/p @(.+)/, (msg, match) => {
+//   console.log('found: @' + match[1]);
+//   parseProfile(match[1]);
+// });
 
 // parse profile
 // insta url
 bot.onText(/(https:\/\/)?(www\.)?instagram\.com\/([^\/\?]+)/, (msg, match) => {
-  console.log('found: @' + match[3]);
-  parseProfile(match[3]);
+  var added = parseProfile(match[3], msg.chat);
 });
 
 
