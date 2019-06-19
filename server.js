@@ -30,7 +30,6 @@ const channel = process.env.TELEGRAM_CHANNEL_ID;
 function parseProfile(username, chat)
 {
   username = username.toLowerCase().trim();
-  var added = false;
   const url = 'https://www.instagram.com/' + username + '/';
 
   Profile.findOne({ username: username }, function (err, p) {
@@ -66,7 +65,6 @@ function parseProfile(username, chat)
       p.save().then(() => log.info('Duplicate add attempt @' + username));
     }
   });
-  return added;
 }
 
 // Matches "/echo [whatever]"
