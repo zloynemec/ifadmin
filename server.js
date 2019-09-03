@@ -31,7 +31,7 @@ function parseProfile(username, chat)
 {
   username = username.toLowerCase().trim();
   const url = 'https://www.instagram.com/' + username + '/';
-  const short_url = 'instagram.com/username'
+  const short_url = 'instagram.com/' + username;
 
   Profile.findOne({ username: username }, function (err, p) {
     if (!p) {
