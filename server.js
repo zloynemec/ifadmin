@@ -81,28 +81,21 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
   bot.sendMessage(chatId, resp);
 });
 
+// Command "/count"
 bot.onText(/\/count/, (msg, match) => {
   Profile.countDocuments({}, function (err, count) {
     bot.sendMessage(msg.chat.id, 'Number of profiles: ' + count);
   });
 });
 
-
-// parse profile and send last pic from it
-// /p @user command
-// bot.onText(/\/p @(.+)/, (msg, match) => {
-//   console.log('found: @' + match[1]);
-//   parseProfile(match[1]);
-// });
-
-// parse profile
-// insta url
+// Add profile command 
+// Just post an Instagram URL as a text
 bot.onText(/(https:\/\/)?(www\.)?instagram\.com\/([^\/\?]+)/, (msg, match) => {
   var added = parseProfile(match[3], msg.chat);
 });
 
 
-// Matches "/remove @username"
+// Command "/remove @username"
 bot.onText(/\/remove @(.+)/, (msg, match) => {
   Profile.findOneAndRemove({ username: match }, function (err, p) {
     if (p) {
@@ -112,12 +105,6 @@ bot.onText(/\/remove @(.+)/, (msg, match) => {
   });
 });
 
-
-bot.onText(/\/count/, (msg, match) => {
-  Profile.countDocuments({}, function (err, count) {
-    bot.sendMessage(msg.chat.id, 'Number of profiles: ' + count);
-  });
-});
 
 
 // Listen for any kind of message. There are different kinds of
