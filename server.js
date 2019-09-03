@@ -102,6 +102,24 @@ bot.onText(/(https:\/\/)?(www\.)?instagram\.com\/([^\/\?]+)/, (msg, match) => {
 });
 
 
+// Matches "/remove @username"
+bot.onText(/\/remove @(.+)/, (msg, match) => {
+  Profile.findOneAndRemove({ username: match }, function (err, p) {
+    if (p) {
+      log.info('Profile deleted @' + username);
+      bot.sendMessage(chatId, 'Profile deleted');
+    }  
+  });
+});
+
+
+bot.onText(/\/count/, (msg, match) => {
+  Profile.countDocuments({}, function (err, count) {
+    bot.sendMessage(msg.chat.id, 'Number of profiles: ' + count);
+  });
+});
+
+
 // Listen for any kind of message. There are different kinds of
 // messages.
 // bot.on('message', (msg) => {
