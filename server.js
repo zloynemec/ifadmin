@@ -31,6 +31,7 @@ function parseProfile(username, chat)
 {
   username = username.toLowerCase().trim();
   const url = 'https://www.instagram.com/' + username + '/';
+  const short_url = 'instagram.com/username'
 
   Profile.findOne({ username: username }, function (err, p) {
     if (!p) {
@@ -52,7 +53,7 @@ function parseProfile(username, chat)
             }
           });
           if (photos.length > 0) {
-            bot.sendMessage(channel, url);
+            bot.sendMessage(channel, short_url);
             bot.sendMediaGroup(channel, photos.slice(0, 9));
           }
         }
