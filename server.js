@@ -97,7 +97,9 @@ bot.onText(/(https:\/\/)?(www\.)?instagram\.com\/([^\/\?]+)/, (msg, match) => {
 
 // Command "/remove @username"
 bot.onText(/\/remove @(.+)/, (msg, match) => {
-  Profile.findOneAndRemove({ username: match }, function (err, p) {
+  username = match[1].toLowerCase().trim();
+  
+  Profile.findOneAndDelete({ username: username }, function (err, p) {
     if (p) {
       log.info('Profile deleted @' + username);
       bot.sendMessage(chatId, 'Profile deleted');
